@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: result-deployment
+  namespace: result-app
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: result
+
+  template:
+    metadata:
+      labels:
+        app: result
+
+    spec:
+      containers:
+        - name: result
+          image: kenny891/my-result-app_demo:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
