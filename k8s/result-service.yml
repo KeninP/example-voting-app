@@ -6,7 +6,7 @@ metadata:
   namespace: result-app
 
 spec:
-  type: NodePort
+  type: ClusterIP
 
   selector:
     app: result
@@ -14,4 +14,4 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30081
+    
