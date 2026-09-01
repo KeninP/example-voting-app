@@ -9,7 +9,27 @@ on:
       - '.github/workflows/vote-ci.yml'
 
 jobs:
-  build:
+
+  # Stage 1: Initial checks
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check Python syntax
+        run: python -m py_compile vote/app.py
+
+
+  # Stage 2: Application tests
+  test:
+    needs: check
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +50,29 @@ jobs:
         run: |
           cd vote
           python -m pytest
+
+
+  # Stage 3: Docker image build
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t my-vote-app:5.0 ./vote
+
+
+  # Stage 4: Push image to Docker Hub
+  push:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t my-vote-app:5.0 ./vote
