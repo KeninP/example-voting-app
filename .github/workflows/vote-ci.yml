@@ -62,10 +62,10 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Docker image
-        run: docker build -t kenny891/my-vote-app_demo:5.0 ./vote
+        run: docker build -t kenny891/my-vote-app_demo:6.0 ./vote
 
       - name: Save Docker image
-        run: docker save kenny891/my-vote-app_demo:5.0 -o vote-image.tar
+        run: docker save kenny891/my-vote-app_demo:6.0 -o vote-image.tar
 
       - name: Upload Docker image
         uses: actions/upload-artifact@v7
@@ -95,4 +95,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push Docker image
-        run: docker push kenny891/my-vote-app_demo:5.0
+        run: docker push kenny891/my-vote-app_demo:6.0
