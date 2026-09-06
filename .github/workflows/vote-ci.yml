@@ -21,7 +21,7 @@
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Push Docker image to ECR
+      - name: Push Docker image to ECR AWA
         run: |
           docker tag kenny891/my-vote-app_demo:6.0 573539705056.dkr.ecr.eu-north-1.amazonaws.com/vote-app:6.0
           docker push 573539705056.dkr.ecr.eu-north-1.amazonaws.com/vote-app:6.0
