@@ -12,6 +12,11 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  ECR_REGISTRY: 573539705056.dkr.ecr.eu-north-1.amazonaws.com
+  ECR_REPOSITORY: vote-app
+
 jobs:
 
   # Stage 1: Initial checks
@@ -66,10 +71,16 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Docker image
-        run: docker build -t kenny891/my-vote-app_demo:7.0 ./vote
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            ./vote
 
       - name: Save Docker image
-        run: docker save kenny891/my-vote-app_demo:7.0 -o vote-image.tar
+        run: |
+          docker save \
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -o vote-image.tar
 
       - name: Upload Docker image
         uses: actions/upload-artifact@v7
@@ -103,8 +114,7 @@ jobs:
 
       - name: Push Docker image to ECR
         run: |
-          docker tag kenny891/my-vote-app_demo:7.0 573539705056.dkr.ecr.eu-north-1.amazonaws.com/vote-app:7.0
-          docker push 573539705056.dkr.ecr.eu-north-1.amazonaws.com/vote-app:7.0
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 
   # Stage 5: Deploy to EKS
@@ -128,7 +138,7 @@ jobs:
       - name: Update Vote Deployment
         run: |
           kubectl set image deployment/vote-deployment \
-            vote=573539705056.dkr.ecr.eu-north-1.amazonaws.com/vote-app:7.0 \
+            vote=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -n vote-app
 
       - name: Wait for rollout
