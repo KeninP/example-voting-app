@@ -91,16 +91,18 @@ jobs:
 
       - name: Load Docker image
         run: docker load -i vote-image.tar
-      
+
+      # Debug GitHub OIDC identity before AWS role assumption
       - name: Debug OIDC claims
         uses: actions/github-script@v8
         with:
           script: |
             const token = await core.getIDToken('sts.amazonaws.com');
+
             const payload = JSON.parse(
               Buffer.from(token.split('.')[1], 'base64url').toString()
             );
-            
+
             console.log('OIDC claims:');
             console.log('sub:', payload.sub);
             console.log('aud:', payload.aud);
