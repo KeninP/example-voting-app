@@ -1,6 +1,5 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: postgres-deployment
   namespace: vote-app
@@ -21,15 +20,10 @@ spec:
       containers:
         - name: postgres
           image: postgres:15-alpine
+
           ports:
             - containerPort: 5432
 
-          env:
-            - name: POSTGRES_USER
-              value: postgres
-
-            - name: POSTGRES_PASSWORD
-              value: postgres
-
-            - name: POSTGRES_DB
-              value: postgres
+          envFrom:
+            - secretRef:
+                name: postgres-secret

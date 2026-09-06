@@ -1,0 +1,23 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: vote-lab
+  region: eu-north-1
+  version: "1.36"
+
+autoModeConfig:
+  enabled: false
+
+managedNodeGroups:
+  - name: vote-workers
+    instanceType: t3.small
+    minSize: 1
+    maxSize: 1
+    desiredCapacity: 1
+    volumeSize: 20
+    privateNetworking: false
+
+vpc:
+  nat:
+    gateway: Disable

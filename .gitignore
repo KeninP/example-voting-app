@@ -4,3 +4,5 @@ bin/
 obj/
 .vs/
 node_modules/
+
+k8s/postgres-secret.yaml

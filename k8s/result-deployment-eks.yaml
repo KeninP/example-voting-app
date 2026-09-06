@@ -1,8 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
-  name: redis-deployment
+  name: result-deployment
   namespace: vote-app
 
 spec:
@@ -10,16 +9,17 @@ spec:
 
   selector:
     matchLabels:
-      app: redis
+      app: result
 
   template:
     metadata:
       labels:
-        app: redis
+        app: result
 
     spec:
       containers:
-        - name: redis
-          image: redis:7-alpine
+        - name: result
+          image: kenny891/my-result-app_demo:1.0
+
           ports:
-            - containerPort: 6379
+            - containerPort: 80
