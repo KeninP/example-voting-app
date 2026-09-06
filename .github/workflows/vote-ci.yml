@@ -92,6 +92,9 @@ jobs:
       - name: Load Docker image
         run: docker load -i vote-image.tar
 
+      - name: Debug OIDC claims
+        uses: github/actions-oidc-debugger@main
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
