@@ -1,8 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
-  name: worker-deployment
+  name: worker
   namespace: vote-app
 
 spec:
@@ -21,4 +20,3 @@ spec:
       containers:
         - name: worker
           image: kenny891/my-worker-app_demo:1.0
-          imagePullPolicy: Always
