@@ -1,65 +1,55 @@
-# Example Voting App
+# Voting App — CI/CD to Amazon EKS with GitHub Actions + OIDC
 
-A simple distributed application running across multiple Docker containers.
-
-## Getting started
-
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
-
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
-
-Run in this directory to build and run the app:
-
-```shell
-docker compose up
-```
-
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
-
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
-
-```shell
-docker swarm init
-```
-
-Once you have your swarm, in this directory run:
-
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
-```
-
-## Run the app in Kubernetes
-
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
-
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
-
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
+A multi-service voting app (based on [dockersamples/example-voting-app](https://github.com/dockersamples/example-voting-app)) that I extended with a full CI/CD pipeline: tests, container builds, keyless push to Amazon ECR, and automated rollouts to an EKS cluster.
 
 ## Architecture
 
-![Architecture diagram](architecture.excalidraw.png)
+```
+ vote (Python/Flask) ──► redis ──► worker (.NET) ──► postgres ◄── result (Node.js)
+```
 
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
+| Service | Stack | Runs on |
+|---|---|---|
+| `vote` | Python / Flask | EKS (`vote-app` namespace) |
+| `result` | Node.js | EKS |
+| `worker` | .NET | EKS |
+| `redis`, `postgres` | official images | EKS |
 
-## Notes
+## Pipeline (`.github/workflows/vote-ci.yml`)
 
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
+Triggered on pushes to `main` that touch `vote/**`:
 
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+1. **Check:** Python syntax check
+2. **Test:** install dependencies, run `pytest`
+3. **Build:** Docker image tagged with the **commit SHA** (traceable, easy rollback)
+4. **Push:** GitHub Actions assumes an AWS IAM role via **OIDC** (no stored AWS keys) and pushes to **Amazon ECR**
+5. **Deploy:** `aws eks update-kubeconfig` → `kubectl set image` → waits on `kubectl rollout status` and verifies the pods
+
+`result-ci.yml` and `worker-ci.yml` build and push their images to Docker Hub using repository secrets.
+
+## Infrastructure
+
+- `eks-cluster.yaml`: eksctl cluster config (`vote-lab`, eu-north-1, managed node group)
+- `k8s/`: Deployments, Services, ConfigMap and Ingress for every service
+- `vote-app/`: **Helm chart** packaging the app (`vote-app-0.1.0.tgz`)
+
+```bash
+eksctl create cluster -f eks-cluster.yaml
+kubectl create namespace vote-app
+helm install vote-app ./vote-app -n vote-app
+# or: kubectl apply -f k8s/ -n vote-app
+```
+
+## Run locally
+
+```bash
+docker compose up
+# vote:   http://localhost:8080
+# result: http://localhost:8081
+```
+
+## What I learned
+
+- Setting up GitHub OIDC trust with AWS IAM, and debugging token claims until role assumption worked
+- Splitting CI into gated stages so a broken test never reaches the cluster
+- Moving from raw manifests to a Helm chart for repeatable installs
